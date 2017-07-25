@@ -169,7 +169,6 @@ def get_all_paths():
     header_paths.append("/usr/include")
     library_paths.append("/usr/lib")
     library_paths.append("/usr/lib64")
-    library_paths.append("/usr/lib/x86_64-linux-gnu/")
 
     # If their system has ldconfig, this helps us even more
     tmp_dir = tempfile.mkdtemp(prefix = 'tmp_ldc_')
@@ -177,7 +176,11 @@ def get_all_paths():
     ldconfig_out = open(file_name,'w')
     DEVNULL = open(os.devnull,'w')
     try:
-        subprocess.call(["ldconfig","-v"],stdout=ldconfig_out,stderr=DEVNULL)
+        try:
+            subprocess.call(["ldconfig","-v"],stdout=ldconfig_out,stderr=DEVNULL)
+        except OSError:
+            # on debian-like, ldconfig is not in non-root user $PATH
+            subprocess.call(["/sbin/ldconfig","-v"],stdout=ldconfig_out,stderr=DEVNULL)
         ldconfig_out.close()    # flush() was not working...
         ldconfig_out = open(file_name,'r')
         find_dir = re.compile(r"([^\t][\w/\-\.]+)")
